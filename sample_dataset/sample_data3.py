@@ -29,6 +29,70 @@ def get_chrome_driver():
    
     return driver
 
+# 슬랙-웹훅으로 크롤링에 걸리는 시간 체크하기
+def send_slack(text):
+    import requests
+    import json
+    import datetime
+
+    WEBHOOK_URL = "url"
+
+    # 현재시간도 출력
+    now = datetime.datetime.now()
+    now = now.strftime("%Y/%m/%d, %H:%M:%S")
+    
+    # text와 현재시간을 같이 슬랙 메세지로 전송
+    text = text + f', 시간: {now}'
+    
+    payload = {
+        'username' : '크롤링봇',
+        "text" : text
+        }
+    
+    requests.post(WEBHOOK_URL, json.dumps(payload))
+    
+# 검색결과 크롤링 함수
+def crawling(driver):
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'lxml') 
+       
+    lst = soup.select('#resultData > tr')
+    
+    for a in lst:
+        
+        num = a.select('tr > td')[0].text
+        name = a.select('tr > td')[1].text
+        date = a.select('tr > td')[2].text
+        he = a.select('tr > td')[3].text.strip()  # 실효습도
+        
+        data = [num, name, date, he]
+        
+        datas.append(data)
+        
+    print('for문 ok')  # 오류 확인
+        
+    return datas
+
+# 다음일로 넘어가기
+def next_date(driver,day):
+    # 날짜 선택후 글자 다 지우기
+    date = driver.find_element(By.XPATH, '//*[@id="startDt"]')
+    # date.send_keys(Keys.CONTROL + "a")
+    # date.send_keys(Keys.DELETE)
+    date.clear()
+    time.sleep(2)
+    print('delete ok') #오류 확인
+    
+    date.send_keys(day)
+    print('send date ok') #오류 확인
+        
+    # 검색 버튼 클릭
+    driver.find_element(By.XPATH, '//*[@id="schForm"]/div[2]/button').click()
+    time.sleep(2)
+    
+        
+# 크롤링 시작
+send_slack('크롤링 시작')
 
 driver = get_chrome_driver()
 
@@ -61,72 +125,37 @@ time.sleep(2)
 driver.find_element(By.XPATH, '//*[@id="sidetreecontrol"]/a').click()
 time.sleep(2)
 
-# # 날짜 선택
-# driver.find_element(By.XPATH, '//*[@id="startDt"]').click()
-# time.sleep(2)
-# driver.find_element(By.XPATH, '//*[@id="datepicker_year"]/option[114]').click() # 2013년
-# driver.find_element(By.XPATH, '//*[@id="datepicker_month"]/option[1]').click() # 1월 선택
-# driver.find_element(By.XPATH, '//*[@id="ui-datepicker-div"]/table/tbody/tr[1]/td[3]/a').click() # 1일 선택
-
-# # 검색 버튼 클릭
-# driver.find_element(By.XPATH, '//*[@id="schForm"]/div[2]/button').click()
-# time.sleep(2)
-
-# 검색결과 크롤링 함수
+# 데이터 수집    
 datas = []
-
-html = driver.page_source
-soup = BeautifulSoup(html, 'lxml')
-
-def crawling(soup):
-        
-    lst = soup.select('#resultData > tr')
+   
+for day in range(20120101,20140620):
     
-    for a in lst:
-        
-        num = a.select('tr > td')[0].text
-        name = a.select('tr > td')[1].text
-        date = a.select('tr > td')[2].text
-        he = a.select('tr > td')[3].text.strip()  # 실효습도
-        
-        data = [num, name, date, he]
-        
-        datas.append(data)
-        
-    print('for문 ok')  # 오류 확인
-        
-    return datas
-
-# 다음일로 넘어가기
-def next_date(driver,day):
-    # 날짜 선택후 글자 다 지우기
-    date = driver.find_element(By.XPATH, '//*[@id="startDt"]').click()
-    date.send_keys(Keys.CONTROL + "a")
-    date.send_keys(Keys.DELETE)
-    time.sleep(2)
-    print('delete ok') #오류 확인
-    
-    date.send_keys(day)
-    print('send date ok') #오류 확인
-        
-    # 검색 버튼 클릭
-    driver.find_element(By.XPATH, '//*[@id="schForm"]/div[2]/button').click()
-    time.sleep(2)
-    
-for day in range(20130101,20130103):
-    try:
-        next_date(driver,day)
-        crawling(driver)
-        time.sleep(3)
-        print(datas)
-    except:
-        # # 시작일이 올바르지 않을경우
-        # driver.find_element(By.CSS_SELECTOR, '.buttonOK').click()
-        # time.sleep(2)
-        print('error!')
-        pass
-        # # 다시 날짜 입력
-        # next_date(driver,day+1)
+    if ((str(day)[-2:] < '32') & (str(day)[-2:] != '00')) & ((str(day)[4:6] < '13') & (str(day)[4:6] != '00')):
+        try:
+            next_date(driver,day)
+            crawling(driver)
+            time.sleep(3)
+            print(day)
+        except:
+            try:
+                # 시작일이 올바르지 않을경우
+                driver.find_element(By.CSS_SELECTOR, '.buttonOK').click()
+                time.sleep(2)    
+            except:
+                print('error!')
+    else:
+        pass    
         
 # 드라이버 종료
-driver.quit()        
+driver.quit() 
+
+send_slack('드라이버 종료')
+
+# 저장
+import pandas as pd
+
+results_df = pd.DataFrame(datas)      
+results_df.columns = ['지점', '지점명', '일시', '실효습도']
+results_df.to_csv('실효습도_크롤링.csv', index=False) 
+
+send_slack('결과 저장')
