@@ -110,15 +110,37 @@ driver.get('https://data.kma.go.kr/climate/ehum/selectEhumChart.do?pgmNo=110')
 driver.find_element(By.XPATH, '//*[@id="txtStnNm"]').click()
 time.sleep(3)
 
-# 강원도 선택
-driver.find_element(By.XPATH, '//*[@id="ztree_26_switch"]').click()
+# 전체 지점 다 선택
+driver.find_element(By.XPATH, '//*[@id="ztree_1_check"]').click()
 time.sleep(2)
 
-# 강릉, 동해, 속초, 태백 체크박스 선택
-driver.find_element(By.XPATH, '//*[@id="ztree_27_check"]').click()
-driver.find_element(By.XPATH, '//*[@id="ztree_29_check"]').click()
-driver.find_element(By.XPATH, '//*[@id="ztree_33_check"]').click()
-driver.find_element(By.XPATH, '//*[@id="ztree_40_check"]').click()
+# ASOS에 없는 지점들은 석택해제
+# 116(관악산) 제외
+driver.find_element(By.XPATH, '//*[@id="ztree_2_switch"]').click()
+driver.find_element(By.XPATH, '//*[@id="ztree_3_check"]').click()  # 선택해제
+time.sleep(2)
+
+# 176(대구(기))
+driver.find_element(By.XPATH, '//*[@id="ztree_7_switch"]').click()
+driver.find_element(By.XPATH, '//*[@id="ztree_9_check"]').click()  # 선택해제
+time.sleep(2)
+
+# 214(삼척)
+driver.find_element(By.XPATH, '//*[@id="ztree_26_switch"]').click()
+driver.find_element(By.XPATH, '//*[@id="ztree_32_check"]').click()  # 선택해제
+time.sleep(2)
+
+# 전라남도 - 164(무안), 256(주암), 175(진도(첨찰산)) 제외
+driver.find_element(By.XPATH, '//*[@id="ztree_66_switch"]').click()
+driver.find_element(By.XPATH, '//*[@id="ztree_71_check"]').click()  # 164 선택해제
+driver.find_element(By.XPATH, '//*[@id="ztree_78_check"]').click()  # 256 선택해제
+driver.find_element(By.XPATH, '//*[@id="ztree_79_check"]').click()  # 175 선택해제
+time.sleep(2)
+
+# 제주도 - 187(성산), 265(성산포) 제외
+driver.find_element(By.XPATH, '//*[@id="ztree_113_switch"]').click()
+driver.find_element(By.XPATH, '//*[@id="ztree_117_check"]').click()  # 187 선택해제
+driver.find_element(By.XPATH, '//*[@id="ztree_118_check"]').click()  # 265 선택해제
 time.sleep(2)
 
 # 선택완료 버튼 클릭
@@ -128,7 +150,7 @@ time.sleep(2)
 # 데이터 수집    
 datas = []
    
-for day in range(20120101,20140620):
+for day in range(20120201,20120502):
     
     if ((str(day)[-2:] < '32') & (str(day)[-2:] != '00')) & ((str(day)[4:6] < '13') & (str(day)[4:6] != '00')):
         try:
