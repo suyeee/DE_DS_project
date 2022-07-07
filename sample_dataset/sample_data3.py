@@ -51,9 +51,6 @@ def send_slack(text):
     
     requests.post(WEBHOOK_URL, json.dumps(payload))
 
-# NaN 데이터 크롤링시 사용
-import csv
-
 # 검색결과 크롤링 함수
 def crawling(driver):
     html = driver.page_source
@@ -72,16 +69,6 @@ def crawling(driver):
         
         datas.append(data)
         
-        # NaN값 처리용
-        # csv파일에 크롤링한 데이터 한 행씩 추가
-        with open('실효습도_2차_NaN_크롤링.csv', 'a', encoding='utf-8-sig', newline='') as f:
-            wr = csv.writer(f)
-            wr.writerow(data)
-            
-            f.close()
-        
-    print('for문 ok')  # 오류 확인
-        
     return datas
 
 # 다음일로 넘어가기
@@ -92,10 +79,8 @@ def next_date(driver,day):
     # date.send_keys(Keys.DELETE)
     date.clear()
     time.sleep(2)
-    print('delete ok') #오류 확인
     
     date.send_keys(day)
-    print('send date ok') #오류 확인
         
     # 검색 버튼 클릭
     driver.find_element(By.XPATH, '//*[@id="schForm"]/div[2]/button').click()
@@ -124,48 +109,47 @@ time.sleep(2)
 # 데이터 수집    
 datas = []
    
-# for day in range(20130208,20130209):
+for day in range(20130208,20130209):
     
-#     if ((str(day)[-2:] < '32') & (str(day)[-2:] != '00')) & ((str(day)[4:6] < '13') & (str(day)[4:6] != '00')):
-#         try:
-#             next_date(driver,day)
+    if ((str(day)[-2:] < '32') & (str(day)[-2:] != '00')) & ((str(day)[4:6] < '13') & (str(day)[4:6] != '00')):
+        try:
+            next_date(driver,day)
             
-#             # 시작일이 올바르지 않을경우
-#             driver.find_element(By.CSS_SELECTOR, '.buttonOK').click()
-#             time.sleep(2)
-#             print('no crawling')
-#             print(day)
-#         except:
-#             try:
-#                 # 날짜가 정상적인 경우 데이터 수집
-#                 crawling(driver)
-#                 time.sleep(3)
-#                 print('yes')
-#                 print(day)        
-#             except:
-#                 print('error!')
-#     else:
-#         pass    
+            # 시작일이 올바르지 않을경우
+            driver.find_element(By.CSS_SELECTOR, '.buttonOK').click()
+            time.sleep(2)
+            print('no crawling')
+            print(day)
+        except:
+            try:
+                # 날짜가 정상적인 경우 데이터 수집
+                crawling(driver)
+                time.sleep(3)
+                print('yes')
+                print(day)        
+            except:
+                print('error!')
+    else:
+        pass    
 
-# NaN 데이터 수집용
-lst = [20130208 ,20130212, 20130217, 20130228, 20130418, 20130615, 20130616, 20140329, 20140330, 20140417]
+# # NaN 데이터 수집용
+# lst = [20130208 ,20130212, 20130217, 20130228, 20130418, 20130615, 20130616, 20140329, 20140330, 20140417]
 
-for day in lst:
-    next_date(driver,day)
-    crawling(driver)
-    time.sleep(3)
+# for day in lst:
+#     next_date(driver,day)
+#     crawling(driver)
+#     time.sleep(3)
     
 # 드라이버 종료
 driver.quit() 
 
 send_slack('드라이버 종료')
 
-# # 저장
-# import pandas as pd
+# 저장
+import pandas as pd
 
-# results_df = pd.DataFrame(datas)      
-# results_df.columns = ['지점', '지점명', '일시', '실효습도']
-# results_df.to_csv('실효습도_2차_NaN_크롤링.csv', index=False)
-
+results_df = pd.DataFrame(datas)      
+results_df.columns = ['지점번호', '지점명', '일시', '실효습도']
+results_df.to_csv('실효습도_2차_NaN_크롤링.csv', index=False)
 
 send_slack('결과 저장')
