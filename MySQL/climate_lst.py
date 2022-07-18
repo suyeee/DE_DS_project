@@ -16,7 +16,7 @@ for a in list(df['지점번호'].unique()):
     g = df.loc[df['지점번호'] == a, '풍향'].values[i]
     h = df.loc[df['지점번호'] == a, '습도'].values[i]
 
-    values_dict = {'stnld' : a, 'stnNm' : b, 'tm' : c, 'ta' : d, 'rn' : e, 'ws' : f, 'wd' : g, 'hm' : h}
+    values_dict = {'stnId' : a, 'stnNm' : b, 'tm' : c, 'ta' : d, 'rn' : e, 'ws' : f, 'wd' : g, 'hm' : h}
     values_list.append(values_dict)
  
 # 리스트 저장하기
